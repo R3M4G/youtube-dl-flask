@@ -1,0 +1,92 @@
+<html>
+	<head>
+		<title>youtube-dl</title>
+		<script src="/static/jquery.js"></script>
+		<script src="/static/filesize.js"></script>
+		<script src="/static/socket.io.js"></script>
+		<link rel="stylesheet" type="text/css" href="/static/youtube-dl.css">
+	</head>
+	<body>
+		<div id=container>
+			<header><h1>youtube-dl</h1></header>
+			<main>
+				<form id=dl-url-form>
+					<input type=text> 
+					<input type=submit value=Parse>
+				</form>
+
+				<div id=video_info></div>
+				<div id=audio_formats class=dl_options></div>
+				<div id=video_formats class=dl_options></div>
+				<div id=other_formats class=dl_options></div>
+				<button id=start_dl style="display:none;">Start Download</button>
+				<div id=debug></div>
+			</main>
+			<footer>
+		</div>
+		<script>
+			var socket = io();
+			$("#dl-url-form").submit( function(event) {
+				var dl_url = $(this).children(":text").val()
+				socket.emit('parse', dl_url);
+				return false;
+			});
+			socket.on('message', function(msg) {
+				$("#video_info").append(msg);
+			});
+			socket.on('progress', function(msg) {
+				$("#debug").append(msg);
+			});
+			socket.on('video_info', function(info) {
+				info = $.parseJSON(info);
+				$(".dl_options").empty();
+
+				[{name:'audio', formatter: function(format) {
+					return format.abr+'k, '+format.acodec+', '+filesize(format.filesize)}}, 
+				{name:'video', formatter: function(format) {
+					return format.width+'x'+format.height+'@'+format.fps+'fps, '+format.vcodec+', '+filesize(format.filesize)}},
+				{name:'other', formatter: function(format) {
+					return format.width+'x'+format.height+', '+format.abr+'k'}}]
+				.forEach(function(category) {
+					$("#"+category.name+'_formats').append('<h2>'+category.name+' formats</h2>').append($("<form />"));
+					form = $("#"+category.name+'_formats > form')
+					.append('<input type=radio name='+category.name+'_formats value=0 checked>').append('None').append('<br>');
+					info[category.name+'_formats'].forEach(function(format) {
+						if(format.vcodec.startsWith('avc'))
+							format.vcodec = 'x264';
+						if(format.acodec.startsWith('mp4'))
+							format.acodec = 'mp4';
+						form.append($('<input type=radio name='+category.name+'_formats value='+format['format_id']+' />'))
+						.append(category.formatter(format))
+						.append('<br>');
+					});
+					delete info[category.name+'_formats'];
+				});
+				$("#other_formats > form").find('input').change( function() {
+					$("#audio_formats").find("[value=0]").prop('checked', true)
+					$("#video_formats").find("[value=0]").prop('checked', true)
+				});
+				$("#video_formats > form").find('input').change( function() {
+					$("#other_formats").find("[value=0]").prop('checked', true)
+				});
+				$("#audio_formats > form").find('input').change( function() {
+					$("#other_formats").find("[value=0]").prop('checked', true)
+				});
+
+				var div = $('#video_info');
+				div.empty();
+				div.append('<h2>video info</h2>')
+				for (var key in info) {
+					div.append(key+': '+info[key]+'<br>');
+				}
+
+				$('#start_dl').css('display', 'block').off().click(function(event) {
+					socket.emit('start_dl', 
+						$("input:radio[name=video_formats]:checked").val()+'+'+
+						$("input:radio[name=audio_formats]:checked").val()+'+'+
+						$("input:radio[name=other_formats]:checked").val());
+				});
+			});
+		</script>
+	</body>
+</html>
