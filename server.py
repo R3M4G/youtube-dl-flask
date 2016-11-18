@@ -1,5 +1,6 @@
 #!/usr/bin/python3
-from flask import Flask, send_from_directory, send_static
+from flask import Flask, send_from_directory
+from flask_socketio import SocketIO
 import gevent.monkey
 import sockets
 
@@ -8,7 +9,7 @@ socketio = SocketIO(app, async_mode='gevent', ping_timeout=30)
 
 @app.route('/')
 def index():
-    return send_static('index.html')
+    return send_from_directory('static', 'index.html')
 
 @app.route('/static/<path:path>')
 def send_static(path):

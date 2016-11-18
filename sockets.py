@@ -92,7 +92,7 @@ def start_dl(format):
             # download the file if it doesn't already exist
             if not os.path.exists(DOWNLOADS_DIR+filename):
                 ydl.process_info(info)
-                filename = utils.encodeFilename(ydl.prepare_filename(info))
+                filename = youtube_dl.utils.encodeFilename(ydl.prepare_filename(info))
                 # then move it to the downloads_dir
                 move(filename, DOWNLOADS_DIR+filename)
 
