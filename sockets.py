@@ -1,11 +1,16 @@
-from flask import Flask, request, send_from_directory, jsonify, copy_current_request_context
-from flask_socketio import SocketIO, emit
+from flask import request, copy_current_request_context
+from flask_socketio import emit
 from copy import copy
 from threading import Thread
 from shutil import move
-import json, traceback, gevent, gevent.monkey, os.path
+from traceback import print_exc
+from gevent import sleep
+import json, os.path
 import youtube_dl
 
+EXPOSED_INFO = ['title', 'uploader', 'duration', 'width', 'height', 'fps']
+EXPOSED_FORMAT_INFO = ['format_id', 'width', 'height', 'fps', 'abr', 'acodec', 'vcodec', 'ext', 'filesize']
+DOWNLOADS_DIR = './downloads/'
 clients = {}
 
 def limited_dict(original, keys, missing=None):
@@ -23,7 +28,7 @@ def create_user():
                     msg, 
                     ["status", "downloaded_bytes", "total_bytes", "speed"]
                 ))),
-                lambda _: gevent.sleep(0)]
+                lambda _: sleep(0)]
         })
     }
 
@@ -34,59 +39,67 @@ def parse_url(url):
     try:
         emit('parsing', '_')
         ydl = clients[request.sid]['ydl']
-        # make the call to the YoutubeDL library
         video_info = ydl.extract_info(url, download=False)
+        format_types = ['video_formats', 'audio_formats', 'other_formats']
 
         # filter the video_info object down to what the user needs to know
-        exposed_info = limited_dict(
-            video_info, 
-            ['title', 'uploader', 'duration', 'width', 'height', 'fps', 'video_formats', 'audio_formats', 'other_formats'],
-            missing=[]
-        )
+        exposed_info = limited_dict(video_info, EXPOSED_INFO + format_types, missing=[])
+
+        # seperate the various file formats by their contents:
+        # audio only, video only, or combined
         for format in video_info['formats']: 
-            if format.get('acodec', "none") != "none": # format can have 'acodec' missing, 'none', or a useful value
-                if format.get('vcodec', "none") != "none":
-                    format_type = "other"
+            if format.get('acodec', "none") is not "none":
+                if format.get('vcodec', "none") is not "none":
+                    format_type = "other_formats"
                 else:
-                    format_type = "audio"
-            elif format.get('vcodec', "none") != 'none':
-                format_type = "video"
+                    format_type = "audio_formats"
+            elif format.get('vcodec', "none") is not 'none':
+                format_type = "video_formats"
 
-            exposed_info[format_type+"_formats"].append(limited_dict(
-                format,
-                ['format_id', 'width', 'height', 'fps', 'abr', 'acodec', 'vcodec', 'ext', 'filesize']
-            ))
+            
+            exposed_info[format_type].append(limited_dict(format, EXPOSED_FORMAT_INFO))
 
-        # send the info to the user
+        # send the filtered info to the user
         emit('video_info', json.dumps(exposed_info))
+        # and store the unfiltered info in the client
         clients[request.sid]['video_info'] = video_info
     except Exception as e:
-        traceback.print_exc()
+        print_exc()
         emit('error', 'parsing')
 
 def start_dl(format):
-    # get options from client
-    ydl = clients[request.sid]['ydl']
-    video_info = clients[request.sid]['video_info']
-    format = '+'.join([i for i in format.split('+') if i != '0'])
+    try:
+        # get options from client
+        ydl = clients[request.sid]['ydl']
+        video_info = clients[request.sid]['video_info']
+        format = '+'.join([i for i in format.split('+') if i != '0'])
 
-    # prepare info dict
-    video_info['requested_formats'] = None
-    format = next(ydl.build_format_selector(format)({'formats': video_info.get('formats')}))
-    if len(format.get('requested_formats', [])) > 1:
-        emit('total_bytes', sum(x['filesize'] for x in format['requested_formats']))
-    video_info.update(format)
+        # prepare info dict
+        video_info['requested_formats'] = None
+        format = next(ydl.build_format_selector(format)({'formats': video_info.get('formats')}))
 
-    # start download in a new thread
-    @copy_current_request_context
-    def download(info):
-        filename = youtube_dl.utils.encodeFilename(ydl.prepare_filename(info))
-        emit('filename', '/downloads/'+filename)
+        # if downloading both audio and video, let the client know the total download size
+        if len(format.get('requested_formats', [])) > 1:
+            emit('total_bytes', sum(x['filesize'] for x in format['requested_formats']))
+        video_info.update(format)
 
-        if not os.path.exists('/srv/ftp/youtube/'+filename):
-            ydl.process_info(info)
-            filename = utils.encodeFilename(ydl.prepare_filename(info))
-            move(filename, '/srv/ftp/youtube/'+filename)
-        # then inform the client where to find it
-        emit('finished', '/downloads/'+filename)
-    Thread(target=download, args=(video_info,)).start()
+        # start download in a new thread
+        @copy_current_request_context
+        def download(info):
+            # let the client know where to find the file in case connection is lost
+            filename = youtube_dl.utils.encodeFilename(ydl.prepare_filename(info))
+            emit('filename', '/downloads/'+filename)
+
+            # download the file if it doesn't already exist
+            if not os.path.exists(DOWNLOADS_DIR+filename):
+                ydl.process_info(info)
+                filename = utils.encodeFilename(ydl.prepare_filename(info))
+                # then move it to the downloads_dir
+                move(filename, DOWNLOADS_DIR+filename)
+
+            # then inform the client where to find it
+            emit('finished', '/downloads/'+filename)
+        Thread(target=download, args=(video_info,)).start()
+    except Exception:
+        print_exc()
+        emit('error', 'parsing')

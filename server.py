@@ -1,10 +1,6 @@
 #!/usr/bin/python3
-from flask import Flask, request, send_from_directory, jsonify, copy_current_request_context
-from flask_socketio import SocketIO, emit
-from copy import copy
-from threading import Thread
-from shutil import move
-import json, traceback, gevent, gevent.monkey, os.path
+from flask import Flask, send_from_directory, send_static
+import gevent.monkey
 import sockets
 
 app = Flask(__name__)
