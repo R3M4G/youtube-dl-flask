@@ -1,3 +1,11 @@
 # youtube-dl-flask
+## Purpose 
+Provide a web frontend to the youtube-dl script, to allow downloads to the server from anywhere.
 
-A frontend for the youtube-dl script written in flask with socketio for progress bar.
+## Usage
+```
+pip install -r requirements.txt
+./server.py
+```
+
+navigate to `http://localhost:8001`

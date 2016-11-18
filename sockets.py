@@ -56,7 +56,6 @@ def parse_url(url):
             elif format.get('vcodec', "none") is not 'none':
                 format_type = "video_formats"
 
-            
             exposed_info[format_type].append(limited_dict(format, EXPOSED_FORMAT_INFO))
 
         # send the filtered info to the user
