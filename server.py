@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 from flask import Flask, send_from_directory
 from flask_socketio import SocketIO
 import gevent.monkey

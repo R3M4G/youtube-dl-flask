@@ -136,6 +136,7 @@
 							previous_bytes += progress.downloaded_bytes;
 						}
 					});
+					return false;
 				});
 
 				socket.on('finished', function(link) {
