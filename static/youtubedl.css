@@ -1,0 +1,79 @@
+html {
+  font-family: 'Open Sans', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+#container {
+  width: 100%;
+  position: absolute;
+  top: 30%;
+}
+
+header h1 {
+  text-align: center;
+}
+
+#parse {
+  width: 66%;
+  margin: auto;
+}
+#parse input[type=text] {
+  width: 79%;
+}
+#parse input[type=submit] {
+  width: 19%;
+}
+
+h2 {
+  text-transform:capitalize;
+}
+
+#video_info {
+  margin: auto;
+  width: 90%;
+  text-align: center;
+  border: black solid 1px;
+}
+
+.dl_options {
+  width: 33%;
+  float: left;
+  padding: 5px;
+}
+
+.dl_options label,p {
+  font-family: monospace;
+  font-size: 125%;
+}
+
+.dl_options label {
+  width: 100%;
+  float: left;
+  padding: 2px;
+}
+
+.dl_options label:nth-child(even) {
+  background-color: #FDD;
+}
+
+.dl_options label:nth-child(odd) {
+  background-color: #FEE;
+}
+
+.dl_options input {
+  margin: 3px;
+}
+
+#download {
+  width: 100%;
+  text-align: center;
+}
+
+#download button {
+  width: 100%
+}

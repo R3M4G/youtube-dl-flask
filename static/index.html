@@ -15,11 +15,13 @@
 					<input type=submit value=Parse>
 				</form>
 
-				<div id=video_info></div>
-				<div id=audio_formats class=dl_options></div>
-				<div id=video_formats class=dl_options></div>
-				<div id=other_formats class=dl_options></div>
-				<div id=download></div>
+				<div id=info_container>
+					<div id=video_info></div>
+					<div id=audio_formats class=dl_options></div>
+					<div id=video_formats class=dl_options></div>
+					<div id=other_formats class=dl_options></div>
+					<div id=download></div>
+				</div>
 			</main>
 			<footer>
 		</div>
@@ -70,6 +72,7 @@
 			socket.on('video_info', function(info) {
 				info = $.parseJSON(info);
 				$(".dl_options").empty();
+				$('#parse > input[type=submit]').val('Parse')
 
 				$('#download').html('<form id=start-download><button type=submit>Start Download</button></form>');
 
@@ -91,7 +94,6 @@
 						form.append($('<label />')
 						.append($('<input type=radio name='+category.name+'_formats value='+format['format_id']+' />'))
 						.append(category.formatter(format)))
-						.append('<br>');
 					});
 					delete info[category.name+'_formats'];
 				});

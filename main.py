@@ -31,14 +31,12 @@ def send_downloaded(path):
 
 @socketio.on('connect')
 def create_user():
-    #print("User {} connected".format(request.sid))
     clients[request.sid] = {
         'video_info': None,
         'ydl': YoutubeDL({
             'ratelimit': 500000,
             'noprogress': True,
-            'quiet': True,
-            'outtmpl': '%(uploader)s - %(title)s[%(resolution)s[%(asr)s].%(ext)s',
+            'outtmpl': '%(uploader)s - %(title)s[%(resolution)s][%(asr)s].%(ext)s',
             'progress_hooks': [
                 lambda msg: emit('progress', json.dumps(limited_dict(
                     msg, 
@@ -50,7 +48,6 @@ def create_user():
 
 @socketio.on('disconnect')
 def destroy_user():
-    #print("User {} disconnected".format(request.sid))
     del clients[request.sid]
 
 @socketio.on('parse')
@@ -118,4 +115,4 @@ def start_dl(format):
 
 if __name__ == "__main__":
     gevent.monkey.patch_all()
-    socketio.run(app, '10.0.0.1', 8001)
+    socketio.run(app, '127.0.0.1', 8001)
