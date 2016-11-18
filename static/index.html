@@ -129,7 +129,7 @@
 					var previous_bytes = 0;
 					socket.on('progress', function(progress) {
 						progress = $.parseJSON(progress);
-						var percent = (previous_bytes + progress.downloaded_bytes / (total_bytes || progress.total_bytes)) * 100;
+						var percent = ((previous_bytes + progress.downloaded_bytes) / (total_bytes || progress.total_bytes)) * 100;
 						progressbar.val(percent);
 						console.log(progress);
 						if( progress.status == "finished" ) {

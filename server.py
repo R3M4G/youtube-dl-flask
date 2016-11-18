@@ -4,6 +4,8 @@ from flask_socketio import SocketIO
 import gevent.monkey
 import sockets
 
+DOWNLOAD_DIR = './downloads/'
+
 app = Flask(__name__)
 socketio = SocketIO(app, async_mode='gevent', ping_timeout=30)
 
@@ -17,7 +19,7 @@ def send_static(path):
 
 @app.route('/downloads/<path:path>')
 def send_downloaded(path):
-    return send_from_directory('/srv/ftp/youtube', path)
+    return send_from_directory(DOWNLOAD_DIR, path)
 
 if __name__ == "__main__":
     gevent.monkey.patch_all()
