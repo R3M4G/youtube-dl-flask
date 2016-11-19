@@ -20,7 +20,7 @@ def create_user():
     clients[request.sid] = {
         'video_info': None,
         'ydl': youtube_dl.YoutubeDL({
-            'ratelimit': 500000,
+            'ratelimit': 10000,
             'noprogress': True,
             'outtmpl': '%(uploader)s - %(title)s[%(resolution)s][%(asr)s].%(ext)s',
             'progress_hooks': [
@@ -48,10 +48,9 @@ def parse_url(url):
         # seperate the various file formats into either audio or video
         # ones with both are shit; forget them
         for format in video_info['formats']:
-            if format.get('acodec', "none") is not "none":
-                if format.get('vcodec', "none") is "none":
+            if format.get('acodec', "none") is not "none" and format.get('vcodec', "none") is "none":
                     format_type = "audio_formats"
-            elif format.get('vcodec', "none") is not 'none':
+            elif format.get('vcodec', "none") is not 'none' and format.get('acodec', "none") is "none":
                 format_type = "video_formats"
             else:
                 continue
