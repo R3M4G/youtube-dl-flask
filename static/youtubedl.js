@@ -74,14 +74,17 @@ $(document).ready(function() {
         while( (param = Math.floor(param / 60)) > 0 ) {
           s = (param % 60).toString() + ':' + s
         }
+        return s;
       }
+    },{
+      name: 'description'
     }]
 
     // populate the  general info
     var div = $('#video_info');
     div.append('<h2>video info</h2>')
     params.forEach( function(param) {
-      div.append('<p><h3>'+param.name+':</h3> '+((param.fomatter || default_formatter)(info[param.name]))+'</p>');
+      div.append($('<p>').append('<h3>'+param.name+':</h3> ', (param.formatter || default_formatter)(info[param.name])));
     });
 
 

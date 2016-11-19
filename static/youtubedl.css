@@ -8,14 +8,11 @@ html {
   box-sizing: border-box;
 }
 
-body {
-  padding-bottom: 100px;
-}
-
 #container {
   width: 100%;
   position: absolute;
   top: 30%;
+  padding-bottom: 20px;
 }
 
 header h1 {
@@ -54,7 +51,7 @@ h2 {
   padding: 5px;
 }
 
-.dl_options label,p {
+.dl_options label {
   font-family: monospace;
   font-size: 125%;
 }
@@ -78,7 +75,7 @@ h2 {
 }
 
 #download {
-  width: 100%;dd
+  width: 100%;
   text-align: center;
 }
 
@@ -87,5 +84,5 @@ h2 {
 }
 
 #download progress {
-	width 100%;
+  width: 100%;
 }

@@ -20,7 +20,6 @@ def create_user():
     clients[request.sid] = {
         'video_info': None,
         'ydl': youtube_dl.YoutubeDL({
-            'ratelimit': 10000,
             'noprogress': True,
             'outtmpl': '%(uploader)s - %(title)s[%(resolution)s][%(abr)sk].%(ext)s',
             'progress_hooks': [
