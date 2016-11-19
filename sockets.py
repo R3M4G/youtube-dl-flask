@@ -8,7 +8,7 @@ from gevent import sleep
 import json, os.path
 import youtube_dl
 
-EXPOSED_INFO = ['title', 'uploader', 'duration', 'width', 'height', 'fps']
+EXPOSED_VIDEO_INFO = ['title', 'uploader', 'duration', 'description']
 EXPOSED_FORMAT_INFO = ['format_id', 'width', 'height', 'fps', 'abr', 'acodec', 'vcodec', 'ext', 'filesize']
 DOWNLOADS_DIR = './downloads/'
 clients = {}
@@ -22,7 +22,7 @@ def create_user():
         'ydl': youtube_dl.YoutubeDL({
             'ratelimit': 10000,
             'noprogress': True,
-            'outtmpl': '%(uploader)s - %(title)s[%(resolution)s][%(asr)s].%(ext)s',
+            'outtmpl': '%(uploader)s - %(title)s[%(resolution)s][%(abr)sk].%(ext)s',
             'progress_hooks': [
                 lambda msg: emit('progress', json.dumps(limited_dict(
                     msg,
@@ -43,7 +43,7 @@ def parse_url(url):
         format_types = ['video_formats', 'audio_formats']
 
         # filter the video_info object down to what the user needs to know
-        exposed_info = limited_dict(video_info, EXPOSED_INFO + format_types, missing=[])
+        exposed_info = limited_dict(video_info, EXPOSED_VIDEO_INFO + format_types, missing=[])
 
         # seperate the various file formats into either audio or video
         # ones with both are shit; forget them
@@ -79,6 +79,9 @@ def start_dl(format):
         if len(format.get('requested_formats', [])) > 1:
             emit('total_bytes', sum(x['filesize'] for x in format['requested_formats']))
         video_info.update(format)
+        for key in EXPOSED_FORMAT_INFO:
+            if key not in format and key in video_info:
+                del video_info[key]
 
         # start download in a new thread
         @copy_current_request_context

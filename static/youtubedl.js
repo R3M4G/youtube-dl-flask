@@ -81,7 +81,7 @@ $(document).ready(function() {
     var div = $('#video_info');
     div.append('<h2>video info</h2>')
     params.forEach( function(param) {
-      div.append('<p><h3>'+param.name+':</h3> '+(param.fomatter || default_formatter)(info[param.name])+'</p>');
+      div.append('<p><h3>'+param.name+':</h3> '+((param.fomatter || default_formatter)(info[param.name]))+'</p>');
     });
 
 
