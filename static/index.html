@@ -11,7 +11,7 @@
 			<header><h1>youtube-dl</h1></header>
 			<main>
 				<form id=parse>
-					<input type=text> 
+					<input type=text>
 					<input type=submit value=Parse>
 				</form>
 
@@ -19,136 +19,10 @@
 					<div id=video_info></div>
 					<div id=audio_formats class=dl_options></div>
 					<div id=video_formats class=dl_options></div>
-					<div id=other_formats class=dl_options></div>
 					<div id=download></div>
 				</div>
 			</main>
 			<footer>
 		</div>
-		<script>
-			var socket = io();
-			var total_bytes;
-			var download_link;
-			var downloading;
-
-			$("#parse").submit( function(event) {
-				var dl_url = $(this).children(":text").val()
-				socket.emit('parse', dl_url);
-				return false;
-			});
-
-			socket.on('disconnect', function(msg) {
-				['video_info', 'audio_formats', 'video_formats', 'other_formats', 'download']
-				.forEach(function(id) {
-					$('#'+id).empty();
-				});
-				$('#download').append('<div class="error message">Connection to server lost</div>')
-				if( downloading ) {
-					$('#download').append('<div class="info message">Download may still complete.'+
-						'Check <a href="'+download_link+'">this link</a> in ten minutes.</div>')
-				}
-			});
-
-			socket.on('debug', function(msg) {
-				$('#debug').append(msg).append('<br>');
-			});
-
-			// total bytes will come as an event if more than one file is selected
-			socket.on('total_bytes', function(bytes){
-				total_bytes = bytes;
-			});
-
-			// the server's best guess at the final location, in case connection is interrupted
-			socket.on('filename', function(name){
-				download_link = name;
-			});
-
-			socket.on('parsing', function(_){
-				// replace with animation later
-				$('#parse > input[type=submit]').val('')
-			});
-
-
-			socket.on('video_info', function(info) {
-				info = $.parseJSON(info);
-				$(".dl_options").empty();
-				$('#parse > input[type=submit]').val('Parse')
-
-				$('#download').html('<form id=start-download><button type=submit>Start Download</button></form>');
-
-				[{name:'audio', formatter: function(format) {
-					return format.abr+'k, '+format.acodec+', '+filesize(format.filesize)}}, 
-				{name:'video', formatter: function(format) {
-					return format.width+'x'+format.height+'@'+format.fps+'fps, '+format.vcodec+', '+filesize(format.filesize)}},
-				{name:'other', formatter: function(format) {
-					return format.width+'x'+format.height+', '+(format.abr ? format.abr+'k' : "None")}}]
-				.forEach(function(category) {
-					$("#"+category.name+'_formats').append('<h2>'+category.name+' formats</h2>').append($("<form />"));
-					form = $("#"+category.name+'_formats > form').append($('<label />')
-					.append('<input type=radio name='+category.name+'_formats value=0 checked>').append('None').append('<br>'));
-					info[category.name+'_formats'].forEach(function(format) {
-						if(format.vcodec.startsWith('avc'))
-							format.vcodec = 'x264';
-						if(format.acodec.startsWith('mp4'))
-							format.acodec = 'mp4';
-						form.append($('<label />')
-						.append($('<input type=radio name='+category.name+'_formats value='+format['format_id']+' />'))
-						.append(category.formatter(format)))
-					});
-					delete info[category.name+'_formats'];
-				});
-				$("#other_formats > form").find('input').change( function() {
-					$("#audio_formats").find("[value=0]").prop('checked', true)
-					$("#video_formats").find("[value=0]").prop('checked', true)
-				});
-				$("#video_formats > form").find('input').change( function() {
-					$("#other_formats").find("[value=0]").prop('checked', true)
-				});
-				$("#audio_formats > form").find('input').change( function() {
-					$("#other_formats").find("[value=0]").prop('checked', true)
-				});
-
-				var div = $('#video_info');
-				div.empty();
-				div.append('<h2>video info</h2>')
-				for (var key in info) {
-					div.append(key+': '+info[key]+'<br>');
-				}
-
-
-				$('#start-download').submit(function(event) {
-					downloading = true;
-					socket.emit('start_dl',
-						$("input:radio[name=video_formats]:checked").val()+'+'+
-						$("input:radio[name=audio_formats]:checked").val()+'+'+
-						$("input:radio[name=other_formats]:checked").val()
-					);
-					var progressbar = $('<progress value="0" max="100" />')
-					$('#download').empty().append(progressbar);
-
-					var previous_bytes = 0;
-					socket.on('progress', function(progress) {
-						progress = $.parseJSON(progress);
-						var percent = ((previous_bytes + progress.downloaded_bytes) / (total_bytes || progress.total_bytes)) * 100;
-						progressbar.val(percent);
-						console.log(progress);
-						if( progress.status == "finished" ) {
-							previous_bytes += progress.downloaded_bytes;
-						}
-					});
-					return false;
-				});
-
-				socket.on('finished', function(link) {
-					['video_info', 'audio_formats', 'video_formats', 'other_formats', 'download']
-					.forEach(function(id) {
-						$('#'+id).empty();
-					});
-					$('#download').append('<a id=download-file href="'+link+'">Download file</a>')
-					downloading = false;
-					$('#parse > input[type=submit]').val('Parse')
-				});
-			});
-		</script>
 	</body>
 </html>

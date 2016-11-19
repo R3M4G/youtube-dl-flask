@@ -25,7 +25,7 @@ def create_user():
             'outtmpl': '%(uploader)s - %(title)s[%(resolution)s][%(asr)s].%(ext)s',
             'progress_hooks': [
                 lambda msg: emit('progress', json.dumps(limited_dict(
-                    msg, 
+                    msg,
                     ["status", "downloaded_bytes", "total_bytes", "speed"]
                 ))),
                 lambda _: sleep(0)]
@@ -40,22 +40,21 @@ def parse_url(url):
         emit('parsing', '_')
         ydl = clients[request.sid]['ydl']
         video_info = ydl.extract_info(url, download=False)
-        format_types = ['video_formats', 'audio_formats', 'other_formats']
+        format_types = ['video_formats', 'audio_formats']
 
         # filter the video_info object down to what the user needs to know
         exposed_info = limited_dict(video_info, EXPOSED_INFO + format_types, missing=[])
 
-        # seperate the various file formats by their contents:
-        # audio only, video only, or combined
-        for format in video_info['formats']: 
+        # seperate the various file formats into either audio or video
+        # ones with both are shit; forget them
+        for format in video_info['formats']:
             if format.get('acodec', "none") is not "none":
-                if format.get('vcodec', "none") is not "none":
-                    format_type = "other_formats"
-                else:
+                if format.get('vcodec', "none") is "none":
                     format_type = "audio_formats"
             elif format.get('vcodec', "none") is not 'none':
                 format_type = "video_formats"
-
+            else:
+                continue
             exposed_info[format_type].append(limited_dict(format, EXPOSED_FORMAT_INFO))
 
         # send the filtered info to the user
