@@ -76,8 +76,8 @@ $(document).ready(function() {
         }
         return s;
       }
-    },{
-      name: 'description'
+    //},{
+    //  name: 'description'
     }]
 
     // populate the  general info

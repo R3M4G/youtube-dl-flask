@@ -1,5 +1,15 @@
 html {
   font-family: 'Open Sans', sans-serif;
+  font-size: 16px;
+}
+
+@media(max-width: 360px){
+  html, input {
+    font-size: 133%;
+  }
+  #parse {
+    width: 90%;
+  }
 }
 
 * {
@@ -22,12 +32,20 @@ header h1 {
 #parse {
   width: 66%;
   margin: auto;
+  display: flex;
 }
 #parse input[type=text] {
-  width: 79%;
+  width: 50%;
+  flex-grow: 1;
 }
 #parse input[type=submit] {
-  width: 19%;
+  min-width: 20%;
+}
+
+@media(max-width: 360px){
+  #parse {
+    width: 90%;
+  }
 }
 
 h2 {
@@ -41,8 +59,11 @@ h2 {
 
 #video_info h3 {
   display: inline;
-  text-align: center;
   text-transform:capitalize;
+}
+
+#video_info p {
+  word-wrap: break-word;
 }
 
 .dl_options {
@@ -54,6 +75,12 @@ h2 {
 .dl_options label {
   font-family: monospace;
   font-size: 125%;
+}
+
+@media(max-width: 360px){
+  .dl_options label {
+    font-size: 100%;
+  }
 }
 
 .dl_options label {
