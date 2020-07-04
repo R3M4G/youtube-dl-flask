@@ -2,3 +2,4 @@ youtube-dl
 flask
 flask-socketio
 gevent
+gunicorn
